@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cooler Calculator with Dark/Light Mode</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        transition: background-color 0.3s, color 0.3s;
+      }
+
+      .calculator {
+        background-color: var(--calculator-bg);
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+      }
+
+      .display {
+        width: 100%;
+        height: 50px;
+        background-color: var(--display-bg);
+        color: var(--display-color);
+        font-size: 2em;
+        text-align: right;
+        border: none;
+        border-radius: 10px;
+        padding: 10px;
+        margin-bottom: 15px;
+      }
+
+      .button-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+      }
+
+      .button {
+        background-color: var(--button-bg);
+        color: var(--button-color);
+        font-size: 1.5em;
+        border: none;
+        border-radius: 10px;
+        padding: 20px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+
+      .button:hover {
+        background-color: var(--button-hover-bg);
+      }
+
+      .button.operator {
+        background-color: var(--operator-bg);
+      }
+
+      .button.operator:hover {
+        background-color: var(--operator-hover-bg);
+      }
+
+      .button.equal {
+        background-color: var(--equal-bg);
+      }
+
+      .button.equal:hover {
+        background-color: var(--equal-hover-bg);
+      }
+
+      .theme-toggle {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 10px;
+      }
+
+      .theme-toggle button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1.5em;
+        color: var(--toggle-color);
+        transition: color 0.3s;
+      }
+
+      /* Dark theme */
+      :root {
+        --calculator-bg: #1e1e1e;
+        --display-bg: #222;
+        --display-color: #fff;
+        --button-bg: #333;
+        --button-color: #fff;
+        --button-hover-bg: #444;
+        --operator-bg: #f39c12;
+        --operator-hover-bg: #e67e22;
+        --equal-bg: #27ae60;
+        --equal-hover-bg: #2ecc71;
+        --toggle-color: #f1c40f;
+      }
+
+      /* Light theme */
+      .light-theme {
+        --calculator-bg: #f5f5f5;
+        --display-bg: #fff;
+        --display-color: #000;
+        --button-bg: #ddd;
+        --button-color: #000;
+        --button-hover-bg: #ccc;
+        --operator-bg: #f39c12;
+        --operator-hover-bg: #e67e22;
+        --equal-bg: #27ae60;
+        --equal-hover-bg: #2ecc71;
+        --toggle-color: #2980b9;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="calculator">
+      <div class="theme-toggle">
+        <button id="themeToggle">&#9728;</button>
+        <!-- Sun/Moon icon -->
+      </div>
+      <input type="text" id="display" class="display" disabled />
+      <div class="button-grid">
+        <button class="button">C</button>
+        <button class="button">←</button>
+        <button class="button operator">/</button>
+        <button class="button operator">*</button>
+        <button class="button">7</button>
+        <button class="button">8</button>
+        <button class="button">9</button>
+        <button class="button operator">-</button>
+        <button class="button">4</button>
+        <button class="button">5</button>
+        <button class="button">6</button>
+        <button class="button operator">+</button>
+        <button class="button">1</button>
+        <button class="button">2</button>
+        <button class="button">3</button>
+        <button class="button equal">=</button>
+        <button class="button">0</button>
+        <button class="button">.</button>
+      </div>
+    </div>
+
+    <script>
+      // Calculator functionality
+      let display = document.getElementById("display");
+      let buttons = document.querySelectorAll(".button");
+      let calculator = {
+        displayValue: "",
+        firstOperand: null,
+        secondOperand: null,
+        operator: null,
+      };
+
+      buttons.forEach((button) => {
+        button.addEventListener("click", (e) => {
+          let buttonText = e.target.textContent;
+          handleInput(buttonText);
+        });
+      });
+
+      document.addEventListener("keydown", (e) => {
+        let key = e.key;
+        if (
+          /[0-9]/.test(key) ||
+          key === "." ||
+          key === "Backspace" ||
+          key === "Enter" ||
+          key === "=" ||
+          ["+", "-", "*", "/"].includes(key)
+        ) {
+          handleInput(key);
+        }
+      });
+
+      function handleInput(input) {
+        switch (input) {
+          case "C":
+            resetCalculator();
+            break;
+          case "←":
+          case "Backspace":
+            calculator.displayValue = calculator.displayValue.slice(0, -1);
+            break;
+          case "=":
+          case "Enter":
+            if (calculator.operator) {
+              calculator.secondOperand = parseFloat(calculator.displayValue);
+              let result = calculate(
+                calculator.firstOperand,
+                calculator.secondOperand,
+                calculator.operator
+              );
+              calculator.displayValue = result.toString();
+              calculator.firstOperand = null;
+              calculator.secondOperand = null;
+              calculator.operator = null;
+            }
+            break;
+          default:
+            if (/[0-9\.]/.test(input)) {
+              if (input === "." && calculator.displayValue.includes("."))
+                return;
+              calculator.displayValue += input;
+            } else if (["+", "-", "*", "/"].includes(input)) {
+              if (calculator.firstOperand === null) {
+                calculator.firstOperand = parseFloat(calculator.displayValue);
+                calculator.operator = input;
+                calculator.displayValue = "";
+              } else if (calculator.displayValue) {
+                calculator.secondOperand = parseFloat(calculator.displayValue);
+                let result = calculate(
+                  calculator.firstOperand,
+                  calculator.secondOperand,
+                  calculator.operator
+                );
+                calculator.displayValue = result.toString();
+                calculator.firstOperand = result;
+                calculator.operator = input;
+                calculator.secondOperand = null;
+              }
+            }
+        }
+        display.value = calculator.displayValue;
+      }
+
+      function calculate(a, b, operator) {
+        switch (operator) {
+          case "+":
+            return a + b;
+          case "-":
+            return a - b;
+          case "*":
+            return a * b;
+          case "/":
+            return a / b;
+        }
+      }
+
+      function resetCalculator() {
+        calculator.displayValue = "";
+        calculator.firstOperand = null;
+        calculator.secondOperand = null;
+        calculator.operator = null;
+        display.value = "";
+      }
+
+      // Dark/Light theme toggle
+      const themeToggle = document.getElementById("themeToggle");
+      const body = document.body;
+
+      // Check for saved theme in localStorage
+      if (localStorage.getItem("theme") === "light") {
+        body.classList.add("light-theme");
+        themeToggle.textContent = "🌙"; // Moon icon
+      }
+
+      themeToggle.addEventListener("click", () => {
+        body.classList.toggle("light-theme");
+
+        if (body.classList.contains("light-theme")) {
+          themeToggle.textContent = "🌙"; // Moon icon for dark mode
+          localStorage.setItem("theme", "light");
+        } else {
+          themeToggle.textContent = "☀️"; // Sun icon for light mode
+          localStorage.setItem("theme", "dark");
+        }
+      });
+    </script>
+  </body>
+</html>
